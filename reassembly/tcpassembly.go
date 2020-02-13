@@ -703,6 +703,12 @@ func (a *Assembler) AssembleWithContext(netFlow gopacket.Flow, t *layers.TCP, ac
 			}
 			half.nextSeq = seq
 			action.queue = false
+		} else if t.PSH {
+			if *debugLog {
+				log.Printf("%v PSH encountered", key)
+			}
+			half.nextSeq = seq
+			action.queue = false
 		} else {
 			if *debugLog {
 				log.Printf("%v waiting for start, storing into connection", key)
@@ -722,7 +728,7 @@ func (a *Assembler) AssembleWithContext(netFlow gopacket.Flow, t *layers.TCP, ac
 		}
 	}
 
-	action = a.handleBytes(bytes, seq, half, ci, t.SYN, t.RST || t.FIN, action, ac)
+	action = a.handleBytes(bytes, seq, half, ci, t.SYN || a.start, t.RST || t.FIN, action, ac)
 	if len(a.ret) > 0 {
 		action.nextSeq = a.sendToConnection(conn, half, ac)
 	}
